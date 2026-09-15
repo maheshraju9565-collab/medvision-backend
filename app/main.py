@@ -1,5 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pathlib import Path
+import uuid
 
 app = FastAPI(
     title="MedVision AI API",
@@ -13,6 +15,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+UPLOAD_DIR = Path("uploads")
+UPLOAD_DIR.mkdir(exist_ok=True)
+
+ALLOWED_EXTENSIONS = {
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".dcm",
+    ".dicom"
+}
 
 
 @app.get("/")
@@ -29,4 +42,44 @@ def health():
     return {
         "status": "healthy",
         "service": "medvision-backend"
+    }
+
+
+@app.post("/api/scans/upload")
+async def upload_scan(file: UploadFile = File(...)):
+
+    if not file.filename:
+        raise HTTPException(
+            status_code=400,
+            detail="Filename is required."
+        )
+
+    extension = Path(file.filename).suffix.lower()
+
+    if extension not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail="Unsupported file type. Use JPG, JPEG, PNG, DCM or DICOM."
+        )
+
+    scan_id = str(uuid.uuid4())
+
+    filename = f"{scan_id}{extension}"
+    file_path = UPLOAD_DIR / filename
+
+    contents = await file.read()
+
+    if len(contents) > 100 * 1024 * 1024:
+        raise HTTPException(
+            status_code=400,
+            detail="File is larger than 100 MB."
+        )
+
+    file_path.write_bytes(contents)
+
+    return {
+        "scan_id": scan_id,
+        "filename": file.filename,
+        "status": "uploaded",
+        "message": "Scan uploaded successfully."
     }
