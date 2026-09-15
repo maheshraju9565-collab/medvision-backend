@@ -1,4 +1,3 @@
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -20,7 +19,8 @@ app.add_middleware(
 def root():
     return {
         "name": "MedVision AI API",
-        "status": "running"
+        "status": "running",
+        "version": "1.0.0"
     }
 
 
@@ -30,4 +30,3 @@ def health():
         "status": "healthy",
         "service": "medvision-backend"
     }
-}
