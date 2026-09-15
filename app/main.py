@@ -2,6 +2,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 import uuid
+import time
 
 app = FastAPI(
     title="MedVision AI API",
@@ -82,4 +83,28 @@ async def upload_scan(file: UploadFile = File(...)):
         "filename": file.filename,
         "status": "uploaded",
         "message": "Scan uploaded successfully."
+    }
+@app.post("/api/scans/{scan_id}/analyze")
+def analyze_scan(scan_id: str):
+
+    # Demo processing delay
+    time.sleep(2)
+
+    return {
+        "scan_id": scan_id,
+        "status": "completed",
+        "analysis": {
+            "model": "medvision-demo-v1",
+            "mode": "simulation",
+            "body_region": "wrist",
+            "possible_fracture": None,
+            "bone_structure": "requires_ai_model",
+            "alignment": "requires_ai_model",
+            "confidence": None,
+            "message": (
+                "This is a prototype integration result. "
+                "No clinical diagnosis was performed."
+            ),
+            "requires_clinician_review": True
+        }
     }
